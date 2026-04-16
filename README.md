@@ -33,7 +33,7 @@ High-quality parsing through [tree-sitter](https://tree-sitter.github.io/tree-si
 - **Plug and play** — single static binary for macOS (arm64/amd64), Linux (arm64/amd64), and Windows (amd64). No Docker, no runtime dependencies, no API keys. Download → `install` → restart agent → done.
 - **66 languages** — vendored tree-sitter grammars compiled into the binary. Nothing to install, nothing that breaks.
 - **120x fewer tokens** — 5 structural queries: ~3,400 tokens vs ~412,000 via file-by-file search. One graph query replaces dozens of grep/read cycles.
-- **11 agents, one command** — `install` auto-detects Claude Code, Codex CLI, Gemini CLI, Zed, OpenCode, Antigravity, Aider, KiloCode, VS Code, OpenClaw, and Kiro — configures MCP entries, instruction files, and pre-tool hooks for each.
+- **10 agents, one command** — `install` auto-detects Claude Code, Codex CLI, Gemini CLI, Zed, OpenCode, Antigravity, Aider, KiloCode, VS Code, and OpenClaw — configures MCP entries, instruction files, and pre-tool hooks for each.
 - **Built-in graph visualization** — 3D interactive UI at `localhost:9749` (optional UI binary variant).
 - **Infrastructure-as-code indexing** — Dockerfiles, Kubernetes manifests, and Kustomize overlays indexed as graph nodes with cross-references. `Resource` nodes for K8s kinds, `Module` nodes for Kustomize overlays with `IMPORTS` edges to referenced resources.
 - **14 MCP tools** — search, trace, architecture, impact analysis, Cypher queries, dead code detection, cross-service HTTP linking, ADR management, and more.
@@ -114,14 +114,6 @@ codebase-memory-mcp config set auto_index true
 ```
 
 When enabled, new projects are indexed automatically on first connection. Previously-indexed projects are registered with the background watcher for ongoing git-based change detection. Configurable file limit: `config set auto_index_limit 50000`.
-
-### Keeping Up to Date
-
-```bash
-codebase-memory-mcp update
-```
-
-The MCP server also checks for updates on startup and notifies on the first tool call if a newer release is available.
 
 ### Uninstall
 
@@ -281,7 +273,6 @@ Restart your agent. Verify with `/mcp` — you should see `codebase-memory-mcp` 
 | KiloCode | `mcp_settings.json` | `~/.kilocode/rules/` | — |
 | VS Code | `Code/User/mcp.json` | — | — |
 | OpenClaw | `openclaw.json` | — | — |
-| Kiro | `.kiro/settings/mcp.json` | — | — |
 
 **Hooks** are advisory (exit code 0) — they remind agents to prefer MCP graph tools when they reach for grep/glob/read, without blocking the tool call.
 
@@ -317,7 +308,7 @@ codebase-memory-mcp cli --raw search_graph '{"label": "Function"}' | jq '.result
 | `trace_call_path` | BFS traversal — who calls a function and what it calls. Depth 1-5. |
 | `detect_changes` | Map git diff to affected symbols + blast radius with risk classification. |
 | `query_graph` | Execute Cypher-like graph queries (read-only). |
-| `get_graph_schema` | Node/edge counts, relationship patterns, property definitions per label. Run this first. |
+| `get_graph_schema` | Node/edge counts, relationship patterns. Run this first. |
 | `get_code_snippet` | Read source code for a function by qualified name. |
 | `get_architecture` | Codebase overview: languages, packages, routes, hotspots, clusters, ADR. |
 | `search_code` | Grep-like text search within indexed project files. |
@@ -361,7 +352,6 @@ codebase-memory-mcp config reset auto_index              # reset to default
 |----------|---------|-------------|
 | `CBM_CACHE_DIR` | `~/.cache/codebase-memory-mcp` | Override the database storage directory. All project indexes and config are stored here. |
 | `CBM_DIAGNOSTICS` | `false` | Set to `1` or `true` to enable periodic diagnostics output to `/tmp/cbm-diagnostics-<pid>.json`. |
-| `CBM_DOWNLOAD_URL` | *(GitHub releases)* | Override the download URL for updates. Used for testing or self-hosted deployments. |
 
 ```bash
 # Store indexes in a custom directory
@@ -417,9 +407,9 @@ Plus: Clojure, F#, Julia, Vim Script, Nix, Common Lisp, Elm, Fortran, CUDA, COBO
 
 ```
 src/
-  main.c              Entry point (MCP stdio server + CLI + install/update/config)
+  main.c              Entry point (MCP stdio server + CLI + install/config)
   mcp/                MCP server (14 tools, JSON-RPC 2.0, session detection, auto-index)
-  cli/                Install/uninstall/update/config (10 agents, hooks, instructions)
+  cli/                Install/uninstall/config (10 agents, hooks, instructions)
   store/              SQLite graph storage (nodes, edges, traversal, search, Louvain)
   pipeline/           Multi-pass indexing (structure → definitions → calls → HTTP links → config → tests)
   cypher/             Cypher query lexer, parser, planner, executor

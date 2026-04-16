@@ -120,7 +120,6 @@ typedef struct {
     bool kilocode;    /* KiloCode globalStorage dir exists */
     bool vscode;      /* VS Code User config dir exists */
     bool openclaw;    /* ~/.openclaw/ exists */
-    bool kiro;        /* ~/.kiro/ exists */
 } cbm_detected_agents_t;
 
 /* Detect which coding agents are installed.
@@ -252,10 +251,6 @@ int cbm_cmd_install(int argc, char **argv);
 
 /* uninstall: remove skills, remove editor MCP configs, remove binary. */
 int cbm_cmd_uninstall(int argc, char **argv);
-
-/* update: check latest release, prompt for index deletion, prompt for ui/standard,
- * download and replace binary. */
-int cbm_cmd_update(int argc, char **argv);
 
 /* config: get/set/list/reset runtime config values. */
 int cbm_cmd_config(int argc, char **argv);
