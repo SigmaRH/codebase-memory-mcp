@@ -7,6 +7,7 @@
  * indirectly via the integration test that builds a tmp tsconfig tree.
  */
 #include "test_framework.h"
+#include "test_helpers.h"
 #include "../src/pipeline/path_alias.h"
 
 #include <stdarg.h>
@@ -14,7 +15,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
-#include <unistd.h>
 
 /* Build a path alias map programmatically (no file I/O), respecting the
  * specificity ordering invariant the loader establishes via qsort. */
@@ -228,15 +228,16 @@ static int write_file(const char *path, const char *content) {
 }
 
 TEST(path_alias_loader_monorepo) {
-    char tmpl[] = "/tmp/cbm_palias_XXXXXX";
-    char *root = mkdtemp(tmpl);
+    char *root = th_mktempdir("cbm_palias");
+    ASSERT_NOT_NULL(root);
+    root = strdup(root); /* th_mktempdir returns a static buffer */
     ASSERT_NOT_NULL(root);
 
     char sub[512];
     snprintf(sub, sizeof(sub), "%s/apps", root);
-    mkdir(sub, 0755);
+    th_mkdir_p(sub);
     snprintf(sub, sizeof(sub), "%s/apps/manager", root);
-    mkdir(sub, 0755);
+    th_mkdir_p(sub);
 
     char path[512];
     snprintf(path, sizeof(path), "%s/tsconfig.json", root);
@@ -273,31 +274,21 @@ TEST(path_alias_loader_monorepo) {
     free(r2);
 
     cbm_path_alias_collection_free(coll);
-
-    /* Cleanup tmp tree. */
-    snprintf(path, sizeof(path), "%s/apps/manager/tsconfig.json", root);
-    unlink(path);
-    snprintf(path, sizeof(path), "%s/tsconfig.json", root);
-    unlink(path);
-    snprintf(path, sizeof(path), "%s/apps/manager", root);
-    rmdir(path);
-    snprintf(path, sizeof(path), "%s/apps", root);
-    rmdir(path);
-    rmdir(root);
+    th_rmtree(root);
+    free(root);
     PASS();
 }
 
 /* ── Loader returns NULL when no configs found ─────────────────── */
 
 TEST(path_alias_loader_no_configs) {
-    char tmpl[] = "/tmp/cbm_palias_empty_XXXXXX";
-    char *root = mkdtemp(tmpl);
+    char *root = th_mktempdir("cbm_palias_empty");
     ASSERT_NOT_NULL(root);
 
     cbm_path_alias_collection_t *coll = cbm_load_path_aliases(root);
     ASSERT_NULL(coll);
 
-    rmdir(root);
+    th_rmtree(root);
     PASS();
 }
 
